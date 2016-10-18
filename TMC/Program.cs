@@ -61,8 +61,10 @@ namespace TMC
             Console.WriteLine("History record analysis start.");
             ISheet activitySheet = book.GetSheet("Activity");
             ISheet journeySheet = book.GetSheet("Journey");
+            ISheet myIeRecordSheet = book.GetSheet("MyIERecord");
             List<RecentActivity> raColl = new List<RecentActivity>();
             List<Journey> journeyColl = new List<Journey>();
+            List<MyIERecord> myIeRecordColl = new List<MyIERecord>();
             for (int i = 1; i < activitySheet.LastRowNum + 1; i++) {
                 if (activitySheet.GetRow(i) != null && activitySheet.GetRow(i).GetCell(0) != null) {
                     RecentActivity ra = new RecentActivity
@@ -87,6 +89,13 @@ namespace TMC
                         Achievements = new List<Role>()
                     };
                     journeyColl.Add(sh);
+
+                    MyIERecord record = new MyIERecord
+                    {
+                        Name = activitySheet.GetRow(i).GetCell(0).StringCellValue.Trim(),
+                        Records = new List<IERecord>()
+                    };
+                    myIeRecordColl.Add(record);
                 }
                 Console.Write($"\rProgress {i - 1}/{activitySheet.LastRowNum - 1}");
             }
@@ -225,6 +234,7 @@ namespace TMC
                 journeySheet.GetRow(0).GetCell(indexOfName[key]).SetCellValue(key);
             }
 
+            #region Journey writing
             Console.WriteLine("Start Journey sheet writing.");
             foreach (var journey in journeyColl) {
                 int index = indexOfName[journey.Name];
@@ -236,6 +246,79 @@ namespace TMC
                         journeySheet.GetRow(i).GetCell(index).SetCellValue(done.Name);
                     }
                     Console.Write($"\rProgress {journey.Name}: {i}/{journeySheet.LastRowNum}");
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine("Finished Journey sheet writing.");
+            #endregion
+            #endregion
+
+            Console.WriteLine("IE Record analysis start.");
+            foreach (var meeting in meetings) {
+                #region Add IE record
+                var speaker1 = myIeRecordColl.FirstOrDefault(me => me.Name == meeting.Speaker1);
+                var speaker2 = myIeRecordColl.FirstOrDefault(me => me.Name == meeting.Speaker2);
+                var speaker3 = myIeRecordColl.FirstOrDefault(me => me.Name == meeting.Speaker3);
+                var speaker4 = myIeRecordColl.FirstOrDefault(me => me.Name == meeting.Speaker4);
+                if (speaker1 != null) {
+                    IERecord record = new IERecord
+                    {
+                        Name = meeting.IE1,
+                        ProjLevel = meeting.Prj1,
+                        MeetingDate = meeting.DATE
+                    };
+                    speaker1.Records.Add(record);
+                }
+                if (speaker2 != null) {
+                    IERecord record = new IERecord
+                    {
+                        Name = meeting.IE2,
+                        ProjLevel = meeting.Prj2,
+                        MeetingDate = meeting.DATE
+                    };
+                    speaker2.Records.Add(record);
+                }
+                if (speaker3 != null) {
+                    IERecord record = new IERecord
+                    {
+                        Name = meeting.IE3,
+                        ProjLevel = meeting.Prj3,
+                        MeetingDate = meeting.DATE
+                    };
+                    speaker3.Records.Add(record);
+                }
+                if (speaker4 != null) {
+                    IERecord record = new IERecord
+                    {
+                        Name = meeting.IE4,
+                        ProjLevel = meeting.Prj4,
+                        MeetingDate = meeting.DATE
+                    };
+                    speaker4.Records.Add(record);
+                }
+                Console.Write($"\rProgress {meeting.DATE}");
+                #endregion
+            }
+            Console.WriteLine();
+            Console.WriteLine("Finished IE Record analysis.");
+
+            #region IE record writing
+            myIeRecordSheet.CreateRow(0);
+            foreach (var key in indexOfName.Keys) {
+                myIeRecordSheet.GetRow(0).CreateCell(indexOfName[key]).CellStyle = style;
+                myIeRecordSheet.GetRow(0).GetCell(indexOfName[key]).SetCellValue(key);
+            }
+
+            Console.WriteLine("Start MyIERecord sheet writing.");
+            foreach (var person in myIeRecordColl) {
+                int index = indexOfName[person.Name];
+                for (int i = 0; i < person.Records.Count(); i++) {
+                    IERecord record = person.Records[i];
+                    if (myIeRecordSheet.GetRow(i + 1) == null)
+                        myIeRecordSheet.CreateRow(i + 1);
+                    myIeRecordSheet.GetRow(i + 1).CreateCell(index).CellStyle = style;
+                    myIeRecordSheet.GetRow(i + 1).GetCell(index).SetCellValue($"{record.ProjLevel} - {record.Name}");
+                    Console.Write($"\rProgress {person.Name}: {i + 1}/{person.Records.Count()}");
                 }
                 Console.WriteLine();
             }
