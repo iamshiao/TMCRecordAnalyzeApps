@@ -9,11 +9,11 @@ namespace TMC
     internal class Journey
     {
         public string Name { get; set; }
-        public List<Done> Achievements { get; set; }
+        public List<Role> Achievements { get; set; }
 
     }
 
-    internal class Done
+    internal class Role
     {
         public string Name { get; set; }
         public DateTime Date { get; set; }

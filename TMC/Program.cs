@@ -62,7 +62,7 @@ namespace TMC
             ISheet activitySheet = book.GetSheet("Activity");
             ISheet journeySheet = book.GetSheet("Journey");
             List<RecentActivity> raColl = new List<RecentActivity>();
-            List<Journey> jColl = new List<Journey>();
+            List<Journey> journeyColl = new List<Journey>();
             for (int i = 1; i < activitySheet.LastRowNum + 1; i++) {
                 if (activitySheet.GetRow(i) != null && activitySheet.GetRow(i).GetCell(0) != null) {
                     RecentActivity ra = new RecentActivity
@@ -84,9 +84,9 @@ namespace TMC
                     Journey sh = new Journey
                     {
                         Name = activitySheet.GetRow(i).GetCell(0).StringCellValue.Trim(),
-                        Achievements = new List<Done>()
+                        Achievements = new List<Role>()
                     };
-                    jColl.Add(sh);
+                    journeyColl.Add(sh);
                 }
                 Console.Write($"\rProgress {i - 1}/{activitySheet.LastRowNum - 1}");
             }
@@ -146,70 +146,73 @@ namespace TMC
             Console.WriteLine("Meeting analysis finished.");
             #endregion
 
+            #region Journey analysis
             Console.WriteLine("Journey analysis start.");
-            meetings.ForEach(m => {
-                Done done = new Done
+            foreach (var meeting in meetings) {
+                #region Add role to journey
+                Role done = new Role
                 {
                     Name = "AhCounter",
-                    Date = m.DATE
+                    Date = meeting.DATE
                 };
-                jColl.FirstOrDefault(sh => sh.Name == m.AhCounter)?.Achievements?.Add(done);
-                done = new Done
+                journeyColl.FirstOrDefault(sh => sh.Name == meeting.AhCounter)?.Achievements?.Add(done);
+                done = new Role
                 {
                     Name = "GE",
-                    Date = m.DATE
+                    Date = meeting.DATE
                 };
-                jColl.FirstOrDefault(sh => sh.Name == m.GE)?.Achievements?.Add(done);
-                done = new Done
+                journeyColl.FirstOrDefault(sh => sh.Name == meeting.GE)?.Achievements?.Add(done);
+                done = new Role
                 {
                     Name = "IE",
-                    Date = m.DATE
+                    Date = meeting.DATE
                 };
-                var IEs = jColl.Where(sh => sh.Name == m.IE1 || sh.Name == m.IE2 || sh.Name == m.IE3 || sh.Name == m.IE4);
+                var IEs = journeyColl.Where(sh => sh.Name == meeting.IE1 || sh.Name == meeting.IE2 || sh.Name == meeting.IE3 || sh.Name == meeting.IE4);
                 foreach (var ie in IEs) {
                     ie?.Achievements?.Add(done);
                 }
-                done = new Done
+                done = new Role
                 {
                     Name = "LE",
-                    Date = m.DATE
+                    Date = meeting.DATE
                 };
-                jColl.FirstOrDefault(sh => sh.Name == m.LE)?.Achievements?.Add(done);
-                done = new Done
+                journeyColl.FirstOrDefault(sh => sh.Name == meeting.LE)?.Achievements?.Add(done);
+                done = new Role
                 {
                     Name = "Speaker",
-                    Date = m.DATE
+                    Date = meeting.DATE
                 };
-                var speakers = jColl.Where(sh => sh.Name == m.Speaker1 || sh.Name == m.Speaker2 || sh.Name == m.Speaker3 || sh.Name == m.Speaker4);
+                var speakers = journeyColl.Where(sh => sh.Name == meeting.Speaker1 || sh.Name == meeting.Speaker2 || sh.Name == meeting.Speaker3 || sh.Name == meeting.Speaker4);
                 foreach (var speaker in speakers) {
                     speaker?.Achievements?.Add(done);
                 }
-                done = new Done
+                done = new Role
                 {
                     Name = "TopicsMaster",
-                    Date = m.DATE
+                    Date = meeting.DATE
                 };
-                jColl.FirstOrDefault(sh => sh.Name == m.TableTopics)?.Achievements?.Add(done);
-                done = new Done
+                journeyColl.FirstOrDefault(sh => sh.Name == meeting.TableTopics)?.Achievements?.Add(done);
+                done = new Role
                 {
                     Name = "Timer",
-                    Date = m.DATE
+                    Date = meeting.DATE
                 };
-                jColl.FirstOrDefault(sh => sh.Name == m.Timer)?.Achievements?.Add(done);
-                done = new Done
+                journeyColl.FirstOrDefault(sh => sh.Name == meeting.Timer)?.Achievements?.Add(done);
+                done = new Role
                 {
                     Name = "Variety",
-                    Date = m.DATE
+                    Date = meeting.DATE
                 };
-                jColl.FirstOrDefault(sh => sh.Name == m.Variety)?.Achievements?.Add(done);
-                done = new Done
+                journeyColl.FirstOrDefault(sh => sh.Name == meeting.Variety)?.Achievements?.Add(done);
+                done = new Role
                 {
                     Name = "TME",
-                    Date = m.DATE
+                    Date = meeting.DATE
                 };
-                jColl.FirstOrDefault(sh => sh.Name == m.TME)?.Achievements?.Add(done);
-                Console.Write($"\rProgress {m.DATE}");
-            });
+                journeyColl.FirstOrDefault(sh => sh.Name == meeting.TME)?.Achievements?.Add(done);
+                Console.Write($"\rProgress {meeting.DATE}");
+                #endregion
+            }
             Console.WriteLine();
             Console.WriteLine("Finished Journey analysis.");
 
@@ -223,20 +226,21 @@ namespace TMC
             }
 
             Console.WriteLine("Start Journey sheet writing.");
-            jColl.ForEach(j => {
-                int index = indexOfName[j.Name];
+            foreach (var journey in journeyColl) {
+                int index = indexOfName[journey.Name];
                 for (int i = 1; i < journeySheet.LastRowNum + 1; i++) {
                     DateTime date = DateTime.FromOADate(journeySheet.GetRow(i).GetCell(0).NumericCellValue);
-                    Done done = j.Achievements.FirstOrDefault(d => d.Date == date);
+                    Role done = journey.Achievements.FirstOrDefault(d => d.Date == date);
                     if (done != null) {
                         journeySheet.GetRow(i).CreateCell(index).CellStyle = style;
                         journeySheet.GetRow(i).GetCell(index).SetCellValue(done.Name);
                     }
-                    Console.Write($"\rProgress {j.Name}: {i}/{journeySheet.LastRowNum}");
+                    Console.Write($"\rProgress {journey.Name}: {i}/{journeySheet.LastRowNum}");
                 }
                 Console.WriteLine();
-            });
+            }
             Console.WriteLine("Finished Journey sheet writing.");
+            #endregion
 
             #region Calculating score
             meetings.Reverse();
