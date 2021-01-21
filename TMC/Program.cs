@@ -81,7 +81,8 @@ namespace TMC
                         LE = (int)activitySheet.GetRow(i).GetCell(8).NumericCellValue,
                         #endregion
                     };
-                    raColl.Add(ra);
+                    if(!string.IsNullOrEmpty(ra.Name))
+                        raColl.Add(ra);
 
                     Journey sh = new Journey
                     {
@@ -228,6 +229,7 @@ namespace TMC
             int bound = 1;
             Dictionary<string, int> indexOfName = new Dictionary<string, int>();
             raColl.Select(ra => ra.Name).ToList().ForEach(name => { indexOfName[name] = bound++; });
+            indexOfName.Remove("");
 
             foreach (var key in indexOfName.Keys) {
                 journeySheet.GetRow(0).CreateCell(indexOfName[key]).CellStyle = style;
@@ -237,6 +239,8 @@ namespace TMC
             #region Journey writing
             Console.WriteLine("Start Journey sheet writing.");
             foreach (var journey in journeyColl) {
+                if (string.IsNullOrEmpty(journey.Name))
+                    continue;
                 int index = indexOfName[journey.Name];
                 for (int i = 1; i < journeySheet.LastRowNum + 1; i++) {
                     DateTime date = DateTime.FromOADate(journeySheet.GetRow(i).GetCell(0).NumericCellValue);
@@ -311,6 +315,8 @@ namespace TMC
 
             Console.WriteLine("Start MyIERecord sheet writing.");
             foreach (var person in myIeRecordColl) {
+                if (string.IsNullOrEmpty(person.Name))
+                    continue;
                 int index = indexOfName[person.Name];
                 for (int i = 0; i < person.Records.Count(); i++) {
                     IERecord record = person.Records[i];
